@@ -12,11 +12,20 @@ data class BreakthroughGame(
     }
 
     override fun getResult(state: GameState?, action: Step?): GameState {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        if (state !== null && action !== null) {
+            state.board[action.from.y][action.from.x] = Player.NONE
+            state.board[action.to.y][action.to.x] = state.nextPlayer
+            state.nextPlayer = when(state.nextPlayer) {
+                Player.BLACK -> Player.WHITE
+                Player.WHITE -> Player.BLACK
+                else -> Player.WHITE // cannot really happen
+            }
+        }
+        return initialState
     }
 
     override fun getPlayer(state: GameState?): Player {
-        return player
+        return state!!.nextPlayer
     }
 
     override fun getPlayers(): Array<Player> {
@@ -27,11 +36,52 @@ data class BreakthroughGame(
     }
 
     override fun getActions(state: GameState?): MutableList<Step> {
+        val steps = mutableListOf<Step>()
+
+        val board = state!!.board
+        val next = state.nextPlayer
+        for((y, row) in board.withIndex()) {
+            for((x, pos) in row.withIndex()) {
+                if (pos === next) {
+                    val nextY = when(next) {
+                        Player.WHITE -> y - 1
+                        Player.BLACK -> y + 1
+                        else -> -1
+                    }
+                    if (x - 1 >= 0 && board[nextY][x - 1] !== next) {
+                        steps.add(Step(x, y, x - 1, nextY))
+                    }
+                    if (board[nextY][x] === Player.NONE) {
+                        steps.add(Step(x, y, x, nextY))
+                    }
+                    if (x + 1 < board[y].size && board[nextY][x + 1] !== next) {
+                        steps.add(Step(x, y, x + 1, nextY))
+                    }
+                }
+            }
+        }
+
+        return steps
     }
 
     override fun getUtility(state: GameState?, player: Player?): Double {
-        // RETURN the
-        // - distance between the furthermost position and the opponent's home row
+        // returns the distance between the furthermost position and the opponent's home row
+        val board = state!!.board
+        if(player === Player.BLACK) {
+            for(i in board.size - 1 downTo 0) {
+                if(board[i].contains(Player.BLACK)) {
+                    return i * 1.0
+                }
+            }
+        } else if (player === Player.WHITE) {
+            for(i in 0..board.size) {
+                if(board[i].contains(Player.WHITE)) {
+                    return (board.size - i) * 1.0
+                }
+            }
+
+        }
+        return -1.0
     }
 
     override fun isTerminal(state: GameState?): Boolean {
@@ -76,5 +126,4 @@ data class BreakthroughGame(
         result = 31 * result + player.hashCode()
         return result
     }
-
 }

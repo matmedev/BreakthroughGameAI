@@ -2,7 +2,7 @@ package org.meightsoft
 
 data class GameState(
     val board: Array<Array<Player>>,
-    val nextPlayer: Player
+    var nextPlayer: Player
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
