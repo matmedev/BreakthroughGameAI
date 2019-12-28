@@ -65,23 +65,48 @@ data class BreakthroughGame(
     }
 
     override fun getUtility(state: GameState?, player: Player?): Double {
-        // returns the distance between the furthermost position and the opponent's home row
+        // RETURNS a value based on
+        // - the distance between the player's furthermost position and the opponent's home row
+        // - the distance between the opponent's furthermost position and the player's home row
+        // - the number of positions taken by the player
+        // - the number of positions taken by the opponent
         val board = state!!.board
-        if(player === Player.BLACK) {
-            for(i in board.size - 1 downTo 0) {
-                if(board[i].contains(Player.BLACK)) {
-                    return i * 1.0
-                }
+        var blackDistance = -1
+        var whiteDistance = -1
+        for(i in board.size - 1 downTo 0) {
+            if(board[i].contains(Player.BLACK)) {
+                blackDistance = i
+                break
             }
-        } else if (player === Player.WHITE) {
-            for(i in 0..board.size) {
-                if(board[i].contains(Player.WHITE)) {
-                    return (board.size - i) * 1.0
-                }
-            }
-
         }
-        return -1.0
+        for(i in 0..board.size) {
+            if(board[i].contains(Player.WHITE)) {
+                whiteDistance = (board.size - i)
+                break
+            }
+        }
+        val distance = when(player) {
+            Player.BLACK -> 1.0 * blackDistance / whiteDistance
+            Player.WHITE -> 1.0 * whiteDistance / blackDistance
+            else -> 0.0
+        }
+        var blackCount = 0
+        var whiteCount = 0
+        for (row in board) {
+            for (pos in row) {
+                if (pos === Player.WHITE) {
+                    whiteCount++
+                } else if (pos === Player.BLACK) {
+                    blackCount++
+                }
+            }
+        }
+        val count = when(player) {
+            Player.BLACK -> 1.0 * blackCount / whiteCount
+            Player.WHITE -> 1.0 * whiteCount / blackCount
+            else -> 0.0
+        }
+        return distance * count
     }
 
     override fun isTerminal(state: GameState?): Boolean {
